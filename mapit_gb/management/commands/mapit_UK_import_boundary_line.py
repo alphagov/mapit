@@ -200,8 +200,8 @@ class Command(LabelCommand):
                 area_code == 'DIW' and unit_id == '174247':
             return {'unit-id': None}
 
-        # May (August update) 2019 name correction
-        if name == 'Highland and Islands PER' and ons_code == 'S17000011':
-            return {'name':'Highlands and Islands PER'}
+        # October 2019 gets Shetland Islands code wrong
+        if area_code == 'WMC' and ons_code == 'S1400005':
+            return {'ons-code': 'S14000051'}
 
         return {}
