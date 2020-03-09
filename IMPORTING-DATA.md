@@ -115,9 +115,9 @@ To update a live mapit server we:
     `mapit-scripts` to refer to the URLs of the new releases uploaded to S3 in
     the last step.
 
-6.  In your Docker container run the `import-uk-onspd` script to import the data:
+6.  In your Mapit directory run the `import-uk-onspd` script to import the data using Docker:
 
-        $ ./import-uk-onspd
+        $ govuk-docker run mapit-app ../mapit-scripts/import-uk-onspd
 
     You can run this from the `mapit-scripts` folder as it is configured to find
     your mapit installation
