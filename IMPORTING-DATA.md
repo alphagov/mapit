@@ -221,14 +221,19 @@ Arrange to have the file you just created uploaded to the
 `govuk-custom-formats-mapit-storage-production` S3 bucket and ensure that
 it's permission is set to `public`.
 
-Once it's been uploaded change the URL and checksum (using
-`sha1sum <your-mapit-file.sql.gz>`) reference in `import-db-from-s3.sh`
-to refer to your new file. Submit change as a PR against
-[Mapit](https://github.com/alphagov/mapit) and deploy once it's been approved.
-
 ### Update servers with new database
 
-NB: THIS REQUIRES ACCESS TO GOV.UK PRODUCTION
+**NB: THIS REQUIRES ACCESS TO GOV.UK PRODUCTION**
+
+Once the data has been uploaded change the URL and checksum (using
+`sha1sum <your-mapit-file.sql.gz>`) reference in `import-db-from-s3.sh`
+to refer to your new file. Submit change as a PR against
+[Mapit](https://github.com/alphagov/mapit) and deploy following the normal
+process.
+
+**Note: Only deploy this change to production once the new data has been tested
+in staging. If a new Mapit machine gets created in AWS, it will automatically
+try importing the data.**
 
 Now that your changes have been deployed, you can test the new database in
 `AWS staging` before moving to production.
