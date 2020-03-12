@@ -211,7 +211,7 @@ Export the database you just built in your container:
 
     $ govuk-docker run mapit-app pg_dump -U postgres mapit | gzip > mapit.sql.gz
 
-It should be \~500Mb in size. You'll want to give it a name that refers
+**It should be \~500Mb in size.** You'll want to give it a name that refers
 to what data it contains. Perhaps `mapit-<%b%Y>.sql.gz` (using
 `strftime` parlance) for a standard release, or
 `mapit-<%b%Y>-<a-description-of-change>.sql.gz` if you've had to change
