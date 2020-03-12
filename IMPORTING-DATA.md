@@ -209,7 +209,7 @@ To update a live mapit server we:
 
 Export the database you just built in your container:
 
-    $ govuk-docker run mapit-app psql -U postgres pg_dump mapit | gzip > mapit.sql.gz
+    $ govuk-docker run mapit-app pg_dump -U postgres mapit | gzip > mapit.sql.gz
 
 It should be \~500Mb in size. You'll want to give it a name that refers
 to what data it contains. Perhaps `mapit-<%b%Y>.sql.gz` (using
