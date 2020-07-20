@@ -6,6 +6,6 @@ psycopg2==2.7.5
 uk-postcode-utils==1.0
 
 python-memcached==1.59
-six==1.11.0
+six==1.15.0
 
 raven==6.9
