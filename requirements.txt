@@ -1,4 +1,4 @@
-Django==1.11.14
+Django==1.11.29
 PyYAML==3.12
 Shapely==1.6.4
 gunicorn==19.9.0
