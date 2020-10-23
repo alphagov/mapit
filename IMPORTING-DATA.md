@@ -1,4 +1,4 @@
-# MapIt - postcode and boundary lookup
+# MapIt - import postcode and boundary data
 
 ## Introduction
 
@@ -19,6 +19,7 @@ administrative entities that postcode belongs to. We then use this
 information to refer the user to local services provided by those
 entities.
 
+
 ## Updating Datasets
 
 Datasets for boundary lines are published twice a year (in May and
@@ -29,185 +30,194 @@ before if possible) we should update the data.
 
 To update a live mapit server we:
 
-1.  [Generate a new database](#generate-a-new-database)
-2.  [Export new database to S3](#export-new-database-to-s3)
-3.  [Update servers with new database](#update-servers-with-new-database)
+1.  [Generate a new database locally](#generate-a-new-database)
+2.  [Export the new database to Amazon S3](#export-new-database-to-s3)
+3.  [Update servers with the new database](#update-servers-with-new-database)
 
-### Generate a new database
+### 1. Generate a new database
 
-1.  Checkout the [mapit](https://github.com/alphagov/mapit),
-    [mapit-scripts](https://github.com/alphagov/mapit-scripts) and
-    [govuk-docker](https://github.com/alphagov/govuk-docker) repos
+#### <a name="installation">1.1 Prepare your Mapit installation</a>
 
-2.  Prepare your Mapit installation in Docker by:
-    1.  Running `make mapit` in the `govuk-docker` repo - this will build the image
-        and install all the dependencies.
-    2.  Reset the database by running `govuk-docker run mapit-app ./reset-db.sh`
-        in the `mapit` repo (you can skip this step if you haven't run Mapit locally
-        before) - this will drop any existing database, create a new empty one
-        and migrate it to the empty schema. See the [Troubleshooting](#troubleshooting)
-        section if you have issues.
-    3.  Start your Docker container by running `govuk-docker up mapit-app`, and
-        check you are able to access `mapit.dev.gov.uk` - it is expected that the
-        frontend looks somewhat "broken", but we only need to worry about the
-        database for importing data.
+Checkout the [mapit](https://github.com/alphagov/mapit),
+[mapit-scripts](https://github.com/alphagov/mapit-scripts) and
+[govuk-docker](https://github.com/alphagov/govuk-docker) repos.
 
-3.  Find the latest ONS Postcode Database, Boundary Line, and OSNI datasets.
-    1.  MySociety may have mirrored the latest datasets on their cache
-        server: <http://parlvid.mysociety.org/os/> so check there first.
-    2.  ONSPD releases can be found via the Office for National
-        Statistics (ONS) at
-        <http://geoportal.statistics.gov.uk/datasets?q=ONS+Postcode+Directory+(ONSPD)&sort_by=name&sort_order=asc>
-        or via
-        <http://geoportal.statistics.gov.uk/> and selecting the latest ONSPD
-        from the Postcodes product drop down.
-    3.  Boundary Line releases can be found via the Ordnance Survey (OS)
-        at
-        <https://www.ordnancesurvey.co.uk/opendatadownload/products.html#BDLINE>
-    4.  OSNI releases can be found via their Spatial NI site at
-        <http://osni.spatial-ni.opendata.arcgis.com/>. Note that they
-        don't have a single download and you have to fetch each dataset
-        we want individually. We're looking for the latest releases from
-        the OSNI Open Data Largescale Boundaries of the following:
-        - [Wards 2012](http://osni-spatial-ni.opendata.arcgis.com/datasets/55cd419b2d2144de9565c9b8f73a226d_0)
-        - [District Electoral Areas 2012](http://osni-spatial-ni.opendata.arcgis.com/datasets/981a83027c0e4790891baadcfaa359a3_4)
-        - [Local Government Districts 2012](http://osni-spatial-ni.opendata.arcgis.com/datasets/a55726475f1b460c927d1816ffde6c72_2)
-        - [Parliamentary Constituencies 2008](http://osni-spatial-ni.opendata.arcgis.com/datasets/563dc2ec3d9943428e3fe68966d40deb_3)
-        - [NI Outline](http://osni-spatial-ni.opendata.arcgis.com/datasets/d9dfdaf77847401e81efc9471dcd09e1_0)
-        If the boundaries are redrawn the name of the dataset may change to
-        reflect the year of the legislation (e.g. there are Wards 1993 and
-        Wards 2012 datasets at the moment, future legislation may introduce a
-        Wards 2020 dataset).
+Prepare your Mapit installation in Docker by:
+  1.  Running `make mapit` in the `govuk-docker` repo - this will build the image
+      and install all the dependencies.
+  2.  Reset the database by running `govuk-docker run mapit-app ./reset-db.sh`
+      in the `mapit` repo (you can skip this step if you haven't run Mapit locally
+      before) - this will drop any existing database, create a new empty one
+      and migrate it to the empty schema. See the [Troubleshooting](#troubleshooting)
+      section if you have issues.
+  3.  Start your Docker container by running `govuk-docker up mapit-app`, and
+      check you are able to access `mapit.dev.gov.uk` - it is expected that the
+      frontend looks somewhat "broken", that's okay - we only need to worry about
+      the database for importing data.
 
-        **Note:** the package of OSNI data that is mirrored on [mysociety's
-        cache](http://parlvid.mysociety.org/os/) is currently a `.tar.gz` that
-        contains all the all 5 shapefile downloads and a `metadata.json` file
-        describing the source, release date, SRID and type.
-        You should check that any new package has the same structure and if not,
-        update `import-uk-onspd` accordingly.
-        If you have to download your own copies of the OSNI data you should check
-        the shapefiles have the correct SRID because they may change from the
-        defaults. If they are incorrect the point lookup can fail (finding parents)
-        or give incorrect results (postcodes).
 
-        Use [`ogrinfo`](http://www.gdal.org/ogrinfo.html) to get the SRID of
-        a shapefile:
-        ```
-        $ ogrinfo OSNI_Open_Data_Largescale_Boundaries__Parliamentary_Constituencies_2008.shp OSNI_Open_Data_Largescale_Boundaries__Parliamentary_Constituencies_2008 -so
-        ```
+#### <a name="download-latest-data">1.2 Download the latest data from sources</a>
 
-        Look up the `GEOGCS` field on [this coordinate systems page](http://downloads.esri.com/support/documentation/ims_/Support_files/elements/pcs.htm)
-        to find the SRID. Most likely SRIDs are 29902 (the NI  projection),
-        29900 (the UK projection), 4326 (the web mercator projection used
-        by google earth among others).
+This consists of the [Office for National Statistics Postcode Database (ONSPD)](https://geoportal.statistics.gov.uk/search?collection=Dataset&q=ONS%20Postcode%20Directory), [Ordnance Survey Boundary Line (BL)](https://osdatahub.os.uk/downloads/open/BoundaryLine), and [Ordnance Survey of Northern Ireland (OSNI)](http://osni.spatial-ni.opendata.arcgis.com/) datasets.
 
-4.  Upload the latest ONS Postcode Database, Boundary Line, and OSNI datasets
-    to the `govuk-custom-formats-mapit-storage-production` S3 bucket. The path
-    should be of the format `source-data/<year-month>/<filename>`.
+> MySociety may have mirrored the latest datasets on their cache server: <http://parlvid.mysociety.org/os/> so check there first.
 
-    **Note:** the uploaded `<filename>` must match the naming convention
-    of the dataset files. This may not be case when initially downloaded.
-    For example, the ONSPD download for November 2018 is `2018-11`.
-    Files within `2018-11/data` are named `ONSPD_NOV_2018_UK.xxx`.
-    Before uploading in S3, rename folder `2018-11` to `ONSPD_NOV_2018_UK`.
+  1. **ONS Postcode Database** - ONSPD releases can be found via the Office
+      for National Statistics (ONS) at
+      <http://geoportal.statistics.gov.uk/datasets?q=ONS+Postcode+Directory+(ONSPD)&sort_by=name&sort_order=asc>
+      or via
+      <http://geoportal.statistics.gov.uk/> and selecting the latest ONSPD
+      from the Postcodes product drop down.
+  2.  **Boundary Line data** - BL releases can be found via the Ordnance Survey (OS)
+      at
+      <https://osdatahub.os.uk/downloads/open/BoundaryLine> and select the
+      `ESRI Shapefile` format to download
+  3.  **ONSI data** - For the ONSI data we now point to Mysociety's URL in the
+      [check-onsi-downloads](https://github.com/alphagov/mapit-scripts/blob/master/check-osni-downloads#L18) script, as there have not been any changes since December 2015.
+      It's still worth checking if there are any updates. See [about datasets](/ABOUT-DATASETS.md) for more information.
 
-5.  Update the `import-uk-onspd` and `check-onsi-downloads` scripts in
-    `mapit-scripts` to refer to the URLs of the new releases uploaded to S3 in
-    the last step.
 
-6.  In your Mapit directory run the `import-uk-onspd` script to import the data using Docker:
+#### <a name="upload-latest-data">1.3 Upload the latest data to Amazon S3</a>
 
-        $ govuk-docker run mapit-app ../mapit-scripts/import-uk-onspd
+Upload the latest ONS Postcode Database, Boundary Line, and OSNI datasets
+to the `govuk-custom-formats-mapit-storage-production` S3 bucket. The path
+should be of the format `source-data/<year-month>/<filename>`. Also ensure
+that you have set the permissions for the datasets to be `public` so that
+when you run the scripts later they are able to access the S3 files.
 
-    You can run this from the `mapit-scripts` folder as it is configured to find
-    your mapit installation
+>**Note:** the uploaded `<filename>` must match the naming convention
+of the dataset files. This may not be case when initially downloaded.
+For example, the ONSPD download for November 2018 is `2018-11`.
+Files within `2018-11/data` are named `ONSPD_NOV_2018_UK.xxx`.
+Before uploading in S3, rename folder `2018-11` to `ONSPD_NOV_2018_UK`.
 
-    This is a long process, it's importing 1000s of boundary objects and
-    \~2.5 million postcodes, and can take up to 5 hours.
 
-    **This script may fail**. The datasets will change over time to include
-    more data that we can't import (or don't want to import). For
-    example the October 2015 Boundary Line release included new
-    ceremonial and historical boundaries that can't be imported by mapit
-    because the shape files have the wrong kind of data, so we need to
-    exclude those files from the shape files we import. It also included
-    Parish data that couldn't be imported because two parishes had the
-    same gss code. We didn't need parish data so we also removed them
-    from the import - it's likely that "standard" mapit will release a
-    fix for these.
+#### <a name="update-url-paths">1.4 Update URL paths in data import scripts</a>
 
-    If the scripts fail you'll have to investigate why and possibly
-    update it to change how we import the data. Sorry! You may have some
-    success if you read [mysociety's documentation](https://mapit.mysociety.org/docs/)
-    and at [Mapit's logged issues](https://github.com/mysociety/mapit/issues).
-    If you do have to fix the import scripts, or create new ones, consider
-    talking with mysociety developers to see if they're aware and if you can push
-    those changes back upstream.
+Update the [import-uk-onspd](https://github.com/alphagov/mapit-scripts/blob/master/import-uk-onspd)
+script in `mapit-scripts` to refer to the URLs of the new releases uploaded to
+S3 in the [last step](#upload-latest-data).
 
-    If the script fails, it's likely you'll need to drop and recreate
-    the database using the `reset-db.sh` script and run `import-uk-onspd`
-    again. If you have database issues see the [troubleshooting](#troubleshooting)
-    section.
+**Note:** If the ONSI data has been updated and uploaded to S3 update the
+[check-onsi-downloads](https://github.com/alphagov/mapit-scripts/blob/master/check-osni-downloads#L18) script to refer to the new S3 URL.
 
-7.  Check for missing codes.
 
-    The ONS used to identify areas with SNAC codes (called ONS
-    in mapit). They stopped doing this in 2011 and started using GSS
-    codes instead. New areas will not receive SNAC codes, and (for the
-    moment at least) much of GOV.UK relies on SNAC codes to link
-    things up, for example [Frontend's AuthorityLookup](https://github.com/alphagov/frontend/blob/master/lib/authority_lookup.rb).
+#### <a name="run-import-script">1.5 Start running the import script</a>
 
-    The `import-uk-onspd` script's last action is to run a script to show missing codes. It's the line that reads
+In your Mapit directory run the `import-uk-onspd` script to import the data using Docker:
 
-        $MANAGE mapit_UK_show_missing_codes
+    $ govuk-docker run mapit-app ../mapit-scripts/import-uk-onspd
 
-    This iterates over all area types we care about and lists those that
-    are missing a GSS code (hopefully none) and how many are missing an
-    ONS/SNAC code. If it lists any areas that are missing codes and you
-    don't expect them (run the script on production or integration if
-    you're not sure) you'll need to investigate.
+>This is a long process, it's importing 1000s of boundary objects and
+\~2.6 million postcodes, and **takes at least 4.5 hours to run**. The first hour is
+particularly important to monitor as this is when it has typically failed
+in the past.
 
-    Ssh into one of the machines and run:
+If the scripts fail you'll have to investigate why and possibly
+update it to change how we import the data.
 
-        $ cd /var/apps/mapit
-        $ sudo -u deploy govuk_setenv mapit venv/bin/python manage.py mapit_UK_show_missing_codes
+Some suggestions of places to look for help:
+- [Mysociety's documentation](https://mapit.mysociety.org/docs/)
+- [Mapit's logged issues](https://github.com/mysociety/mapit/issues)
 
-    Then compare the output with that generated in your VM.
+Also see the [Troubleshooting](#troubleshooting) section for past issues.
 
-    There is a also script in mapit:
-    `mapit_gb/management/commands/mapit_UK_add_missing_codes.py` that
-    you can update to add the codes once you work out if anything can
-    be done.
+If you do have to fix the import scripts, or create new ones, consider
+talking with Mysociety developers to see if they're aware and if you can push
+those changes back upstream.
 
-    Once these have been updated, the API will return the new GSS code, albeit mislabelled as an ONS code.   
+> **Note:** If the script fails, you'll need to drop and recreate
+the database by running the `reset-db.sh` script and then run `import-uk-onspd`
+again. If you have database issues see the [troubleshooting](#troubleshooting)
+section.
 
-    Hopefully by the time the next releases happen GOV.UK will not rely
-    on ONS/SNAC codes and this will cease being an issue.
 
-    **Note** [Licensify](https://github.com/alphagov/licensify) also depends on knowledge of SNAC codes to build it's own API paths. It will be necessary to update this [file](https://github.com/alphagov/licensify/blob/master/common/app/uk/gov/gds/licensing/model/SnacCodes.scala) with the new GSS codes and corresponding area.
+#### <a name="check-missing-codes">1.6 Check for missing codes</a>
 
-8.  Test some postcodes.
+The ONS used to identify areas with SNAC codes (called ONS
+in mapit). They stopped doing this in 2011 and started using GSS
+codes instead. New areas will not receive SNAC codes, and (for the
+moment at least) much of GOV.UK relies on SNAC codes to link
+things up, for example [Frontend's AuthorityLookup](https://github.com/alphagov/frontend/blob/master/lib/authority_lookup.rb).
 
-    If you've had users complaining that their postcode isn't
-    recognised, then try _those_ postcodes and any other ones
-    you know. If you don't know any postcodes, try this random one:
+The `import-uk-onspd` script's last action is to run a script to show missing codes.
+It's the line that reads
 
-        $ curl http://mapit.dev.gov.uk/postcode/ME206QZ
+    $MANAGE mapit_UK_show_missing_codes
 
-    You should expect a `200` response with data present in the `areas`
-    field of the response.
+This iterates over all area types we care about and lists those that
+are missing a GSS code (hopefully none) and how many are missing an
+ONS/SNAC code. If it lists any areas that are missing codes and you
+don't expect them (run the script on production or integration if
+you're not sure) you'll need to investigate.
 
-    Ensure you test postcodes from all parts of the UK, since Northern
-    Ireland data has been loaded separately.
+Ssh into one of the machines and run:
 
-9.  Make PRs for any changes you had to make. You will have changed the
-    `import-uk-onspd` and `check-osni-downloads` script in `mapit-scripts` to
-    refer to new datasets. If anything failed you may have had to change other
-    things in mapit too.
+    $ cd /var/apps/mapit
+    $ sudo -u deploy govuk_setenv mapit venv3/bin/python manage.py mapit_UK_show_missing_codes
 
-### Export new database to S3
+Then compare the output with that generated in your local Docker container.
 
-Export the database you just built in your container:
+An example of the output (May 2019 data):
+
+        Show missing codes
+
+        11874 areas in current generation (1)
+
+        Checking ['EUR', 'CTY', 'DIS', 'LBO', 'LGD', 'MTD', 'UTA', 'COI'] for missing ['ons', 'gss', 'govuk_slug']
+        12 EUR areas in current generation
+        2 EUR areas have no ons code:
+        Northern Ireland 11874 (gen 1-1) Northern Ireland
+        Scotland 9199 (gen 1-1) Scotland
+        26 CTY areas in current generation
+        192 DIS areas in current generation
+        33 LBO areas in current generation
+        11 LGD areas in current generation
+        36 MTD areas in current generation
+        109 UTA areas in current generation
+        1 COI areas in current generation
+
+There is a also script in mapit
+[mapit_gb/management/commands/mapit_UK_add_missing_codes.py](https://github.com/alphagov/mapit/blob/master/mapit_gb/management/commands/mapit_UK_add_missing_codes.py) that
+you can update to add the codes once you work out if anything can
+be done. See [this example](https://github.com/alphagov/mapit/commit/532f3e88ce0f5dea64b8f7eede6fb80605648e21).
+
+Once these have been updated, the API will return the new GSS code, albeit mislabelled as an ONS code.
+
+**Note** [Licensify](https://github.com/alphagov/licensify) also depends on knowledge of SNAC codes to build it's own API paths. It will be necessary to update this [file](https://github.com/alphagov/licensify/blob/master/common/app/uk/gov/gds/licensing/model/SnacCodes.scala) with the new GSS codes and corresponding area.
+
+
+#### <a name="test-postcodes">1.7 Test some postcodes</a>
+
+If you've had users complaining that their postcode isn't
+recognised, then try _those_ postcodes and any other ones
+you know. If you don't know any postcodes, try this random one:
+
+    $ curl http://mapit.dev.gov.uk/postcode/ME206QZ
+
+You should expect a `200` response with data present in the `areas`
+field of the response. See [this example output](https://github.com/alphagov/mapit/commit/532f3e88ce0f5dea64b8f7eede6fb80605648e21) for an idea of what to expect.
+
+You can also compare the response to existing data we have in one of our environments
+and on Mysociety.
+
+    $ curl https://mapit.integration.govuk-internal.digital/postcode/ME206QZ
+    $ curl https://mapit.mysociety.org/postcode/ME206QZ
+
+>Ensure you test postcodes from **all parts of the UK**, since Northern
+Ireland data has been loaded separately.
+
+
+#### <a name="make-prs">1.8 Make PRs for any changes you had to make</a>
+
+You will have changed the [import-uk-onspd](https://github.com/alphagov/mapit-scripts/blob/master/import-uk-onspd) and [check-onsi-downloads](https://github.com/alphagov/mapit-scripts/blob/master/check-osni-download)
+scripts to refer to new datasets. If anything failed you may have had
+to change other things in the mapit repo too.
+
+
+### 2. Export new database to S3
+
+Export the database you just built in your Docker container:
 
     $ govuk-docker run mapit-app pg_dump -U postgres mapit | gzip > mapit.sql.gz
 
@@ -218,10 +228,11 @@ to what data it contains. Perhaps `mapit-<%b%Y>.sql.gz` (using
 the data outside the normal dataset releases.
 
 Arrange to have the file you just created uploaded to the
-`govuk-custom-formats-mapit-storage-production` S3 bucket and ensure that
-it's permission is set to `public`.
+`govuk-custom-formats-mapit-storage-production` S3 bucket, in the same folder
+the new data has been uploaded to, and ensure that it's permission is set to `public`.
 
-### Update servers with new database
+
+### 3. Update servers with new database
 
 **NB: THIS REQUIRES ACCESS TO GOV.UK PRODUCTION**
 
@@ -231,12 +242,12 @@ to refer to your new file. Submit change as a PR against
 [Mapit](https://github.com/alphagov/mapit) and deploy following the normal
 process.
 
-**Note: Only deploy this change to production once the new data has been tested
+> **Note: Only deploy this change to production once the new data has been tested
 in staging. If a new Mapit machine gets created in AWS, it will automatically
 try importing the data.**
 
 Now that your changes have been deployed, you can test the new database in
-`AWS staging` before moving to production.
+`AWS staging` before moving to `production`.
 
 Once you have tested that a new mapit node works as expected, you can
 update each mapit node in turn using a [fabric
@@ -251,30 +262,32 @@ this is done.
 
 We have two expectations for an updated Mapit database:
 
-### For Postcodes
+- [Changes to postcodes](#for-postcodes)
+- [Changes to areas](#for-areas)
 
-1.  It returns a `200 OK` status for all postcode requests that
-    previously returned `200 OK`. The ONSPD is a complete set of all
-    postcodes, live and terminated and we import the whole thing so
-    postcodes should never be "deleted". If a request for a postcode
-    previously succeeded, it should still succeed.
-2.  It returns either a `404 Not Found` or a `200 OK` for all postcode
-    requests that previously returned `404 Not Found`. As postcodes are
-    released every 3 months, people may have searched for one that did
-    not exist previously that is in our new dataset (now `200 OK`).
-    However if they searched for a bad postcode, or something that is
-    not a postcode at all, we would still expect that to
-    `404 Not Found`.
+### Changes to Postcodes
 
-### For Areas
+#### Existing postcodes
+
+It returns a `200 OK` status for all postcode requests that
+previously returned `200 OK`. The ONSPD is a complete set of all
+postcodes, live and terminated and we import the whole thing so
+postcodes should never be "deleted". If a request for a postcode
+previously succeeded, it should still succeed.
+
+#### Invalid postcodes
+It returns either a `404 Not Found` or a `200 OK` for all postcode
+requests that previously returned `404 Not Found`. As postcodes are
+released every 3 months, people may have searched for one that did
+not exist previously that is in our new dataset (now `200 OK`).
+However if they searched for a bad postcode, or something that is
+not a postcode at all, we would still expect that to
+`404 Not Found`.
+
+### Changes to Areas
 
 A url of the form `/area/<ons-or-gss-code` will result in a
-`302 Redirect` to a url `/area/<internal-id>`. Unfortunately these are
-hard to tell apart as while GSS codes are easily distinguishable (they
-start with a letter, and are 9 characters long) from an internal
-database id (a number), the same is not true of ONS codes (a number /
-character combination that could be 2, 4, 6, 8, or 10 characters long
-and depending on the length, may only be numbers).
+`302 Redirect` to a url `/area/<internal-id>`.
 
 As part of the import process it's quite likely that the internal ids
 will have changed. We should therefore check that all `302 Redirect`
@@ -324,7 +337,7 @@ In the server you want to test run the following:
 
         $ while read line; do curl $line | python -c "import sys, json; data = json.load(sys.stdin); print '${line} found' if len(data['areas']) > 0 else '${line} missing'"; done <mapit-200s
 
-**Note**: Checking the 200's can take around 30 minutes. You can also see the CPU and load on this [Grafana graph](https://grafana.blue.staging.govuk.digital/dashboard/file/machine.json?refresh=1m&orgId=1) and select the machine.
+>**Note**: Checking the 200's can take around 30 minutes. You can also see the CPU and load on this [Grafana graph](https://grafana.blue.production.govuk.digital/dashboard/file/machine.json?refresh=1m&orgId=1) and select the machine.
 
 This process has been automated somewhat via the following [fabric
 script](https://github.com/alphagov/fabric-scripts/blob/master/mapit.py#L51):
@@ -338,7 +351,7 @@ environments.
 
 ### Running the test samples script
 
-For a more comprehensive test, you can use the `test-samples.sh`
+For a more comprehensive test, you can use the [test-samples.sh](https://github.com/alphagov/mapit/blob/master/test-samples.sh)
 script, which needs to be run before and after a database upgrade:
 
     $ your laptop> ssh mapit-1.production
@@ -403,4 +416,6 @@ If you see something similar to:
   Exception: Area Moray [9325] (SPC) does not have a parent?
   ```
 
-Compare the entry with the database in `integration` or `production` to identify what information is missing or needs to be corrected. Searching for the data on https://mapit.mysociety.org might also be helpful.
+Compare the entry with the database in `integration` or `staging` to identify what information is missing or needs to be corrected. Searching for the data on https://mapit.mysociety.org might also be helpful.
+
+You can manually fix it by adding a correction in [mapit/management/find_parents.py](https://github.com/alphagov/mapit/blob/master/mapit/management/find_parents.py). See [this example](https://github.com/alphagov/mapit/commit/5b2ede155a157d7d69883a6a0197513bcbcca4bb) for more information.
