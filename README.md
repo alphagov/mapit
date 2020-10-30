@@ -14,6 +14,11 @@ MapIt was created and is maintained by [mySociety](https://github.com/mysociety/
 - **ONSPD**: The Office for National Statistics Postcode Database - one of the open data sources we use to import data. We get UK postcodes from this.
 - **Boundary Line**: The Ordnance Survey boundary line data - one of the open data sources we use to import data.  We get GB Areas from this.
 - **OSNI**: The Ordnance Survey of Northern Ireland - one of the providers of the open data sources we use to import data.  We get NI Areas from them.
+- **ONS**: Office for National Statistics
+- **GSS**: Government Statistical Service, new ONS codes - GSS codes start with a letter, and are 9 characters long e.g. `S14000051`
+- **SNAC**: old ONS codes - ONS codes consist of a number and/or character combination that could be
+ 2, 4, 6, 8, or 10 characters long, and depending on the length, may only be numbers
+- **SRID**: spatial reference identifier
 
 ## Technical documentation
 
@@ -29,15 +34,30 @@ MapIt has no dependencies on the rest of the GOV.UK stack.
 
 ### Running the application
 
-`GOVUK_ENV=development ./startup.sh`
+Run `make mapit` in the `govuk-docker` repo - this will build the image and install all the dependencies.
 
-Or if you use the GDS development VM you can run this application with Bowler: `bowl mapit`.
+Start your Docker container by running :
 
-To run any other management commands (`.venv/bin/python ./manage.py ...`), you'll need the `GOVUK_ENV` environment variable set.
+    $ govuk-docker up mapit-app
+
+Check you are able to access `mapit.dev.gov.uk` - it is expected that the
+frontend looks somewhat "broken", that's okay - we only need to worry about
+the database for importing data.
+
+To run any other management commands (`.venv/bin/python ./manage.py ...`), you
+will need to be in a bash shell:
+
+    $ docker exec -it <container name> /bin/bash
+
+To run management commands in other environments, you'll need the `GOVUK_ENV` environment variable set.
 
 ### Importing data
 
 Please see [the importing data instructions](./IMPORTING-DATA.md)
+
+### Testing a server with new data
+
+Please see [testing a server with an updated Mapit database](./TESTING-SERVER.md)
 
 ### Running the test suite
 
