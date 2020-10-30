@@ -232,22 +232,19 @@ Arrange to have the file you just created uploaded to the
 the new data has been uploaded to, and ensure that it's permission is set to `public`.
 
 
-### 3. Update servers with new database
+### Test a server in Staging
 
 **NB: THIS REQUIRES ACCESS TO GOV.UK PRODUCTION**
 
 Once the data has been uploaded change the URL and checksum (using
 `sha1sum <your-mapit-file.sql.gz>`) reference in `import-db-from-s3.sh`
-to refer to your new file. Submit change as a PR against
-[Mapit](https://github.com/alphagov/mapit) and deploy following the normal
-process.
-
-> **Note: Only deploy this change to production once the new data has been tested
-in staging. If a new Mapit machine gets created in AWS, it will automatically
-try importing the data.**
+to refer to your new file, see [this example PR](https://github.com/alphagov/mapit/pull/58/files).
+Submit change as a PR against [Mapit](https://github.com/alphagov/mapit) and
+deploy following the normal process to `staging`.
 
 Now that your changes have been deployed, you can test the new database in
-`AWS staging` before moving to `production`.
+`AWS staging` before moving to `production`. See [Testing a server with an
+updated Mapit database](/TESTING-SERVER.md).
 
 Once you have tested that a new mapit node works as expected, you can
 update each mapit node in turn using a [fabric
@@ -258,133 +255,15 @@ script](https://github.com/alphagov/fabric-scripts/blob/master/mapit.py#L10):
 We can happily survive with one mapit-server in an environment while
 this is done.
 
-## Testing a server
+### Update production servers with new database
 
-We have two expectations for an updated Mapit database:
+Now that you are happy with the changes in `staging`, you can now follow update
+the servers in `production`.
 
-- [Changes to postcodes](#for-postcodes)
-- [Changes to areas](#for-areas)
+> **Note: Only deploy this change to production once the new data has been tested
+in staging. If a new Mapit machine gets created in AWS, it will automatically
+try importing the data.**
 
-### Changes to Postcodes
-
-#### Existing postcodes
-
-It returns a `200 OK` status for all postcode requests that
-previously returned `200 OK`. The ONSPD is a complete set of all
-postcodes, live and terminated and we import the whole thing so
-postcodes should never be "deleted". If a request for a postcode
-previously succeeded, it should still succeed.
-
-#### Invalid postcodes
-It returns either a `404 Not Found` or a `200 OK` for all postcode
-requests that previously returned `404 Not Found`. As postcodes are
-released every 3 months, people may have searched for one that did
-not exist previously that is in our new dataset (now `200 OK`).
-However if they searched for a bad postcode, or something that is
-not a postcode at all, we would still expect that to
-`404 Not Found`.
-
-### Changes to Areas
-
-A url of the form `/area/<ons-or-gss-code` will result in a
-`302 Redirect` to a url `/area/<internal-id>`.
-
-As part of the import process it's quite likely that the internal ids
-will have changed. We should therefore check that all `302 Redirect`
-request still result in a `302 Redirect`, and that what it redirects to
-is a `200 OK`. It means we can't really expect all `200 OK` messages
-regardless of the URL to remain `200 OK` - because the import will
-change ids.
-
-You can test the new database using one of the options:
-1. [Generating some test data](#generating-some-test-data)
-2. [Running the test samples script](#running-the-test-samples-script)
-
-### Generating some test data
-
-The best source of testing data for postcode lookups is Production, so
-let's grab all the relevant responses from yesterday's log:
-
-    $ your laptop> ssh <mapit_production_machine>
-    $ mapit-1> sudo awk '$9==200 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-200s
-    $ mapit-1> sudo awk '$9==404 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-404s
-    $ mapit-1> sudo awk '$9==302 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-302s
-
-Download the files via the jumpbox, e.g.
-
-    $ scp -r -oProxyJump=jumpbox.production.govuk.digital <ip_address>:mapit-200s ~/Downloads/
-
-Then copy the three files (mapit-200s, mapit-404s, mapit-302s) to the server you're testing on, e.g.
-
-    $ scp -v -r -oProxyJump=jumpbox.staging.govuk.digital ~/Downloads/mapit-302s <ip_address>:~
-
-In the server you want to test run the following:
-
-1. Test that all the 200s are still 200s:
-
-        $ while read line; do curl -sI $line | grep HTTP/1.1 ; done <mapit-200s | sort | uniq -c
-          27916 HTTP/1.1 200 OK
-2. Test that all the old 404s are either 200s or 404s:
-
-        $ while read line; do curl -sI $line | grep HTTP/1.1 ; done <mapit-404s | sort | uniq -c
-          104 HTTP/1.1 200 OK
-          331 HTTP/1.1 404 Not Found
-3. Test that all the 302s are still 302s:
-
-        $ while read line; do curl -sI $line | grep HTTP/1.1 ; done <mapit-302s | sort | uniq -c
-          807 HTTP/1.1 302 Found
-4. Check that the 200s are still returning areas:
-
-        $ while read line; do curl $line | python -c "import sys, json; data = json.load(sys.stdin); print '${line} found' if len(data['areas']) > 0 else '${line} missing'"; done <mapit-200s
-
->**Note**: Checking the 200's can take around 30 minutes. You can also see the CPU and load on this [Grafana graph](https://grafana.blue.production.govuk.digital/dashboard/file/machine.json?refresh=1m&orgId=1) and select the machine.
-
-This process has been automated somewhat via the following [fabric
-script](https://github.com/alphagov/fabric-scripts/blob/master/mapit.py#L51):
-
-    $ fab $environment -H <ip_address> mapit.check_database_upgrade
-
-**Note**: This replays yesterday's traffic from the machine you
-run it on rather than replaying traffic from production. Useful when
-upgrading production environments, perhaps less so for upgrading other
-environments.
-
-### Running the test samples script
-
-For a more comprehensive test, you can use the [test-samples.sh](https://github.com/alphagov/mapit/blob/master/test-samples.sh)
-script, which needs to be run before and after a database upgrade:
-
-    $ your laptop> ssh mapit-1.production
-    $ mapit-1> /var/apps/mapit/test-samples.sh sample
-
-Perform the database import in the usual way, and then run the script
-in "check" mode, to download the postcode data again and diff the
-results:
-
-    $ your laptop> ssh mapit-1.production
-    $ mapit-1> /var/apps/mapit/test-samples.sh check
-
-Once you have tested the updated mapit node works as expected, you can update
-the other mapit nodes, and then the same on production.
-
-## Things you might have to fix
-
-The Office for National Statistics maintains a series of codes that represent a
-wide range of geographical areas of the UK. MapIt includes these and they are
-unique to each area, but an area can change code, for example when boundaries
-change. If this happens, you might have to change some of our apps to use the
-new codes instead of the old ones.
-
-Our forked repo of MapIt contains a file [``mapit_gb/data/authorities.json``]
-(https://github.com/alphagov/mapit/blob/master/mapit_gb/data/authorities.json)
-which contains a list of Local Authorities, their slugs and their GSS codes.
-During the import (invoked by the `import-uk-onspd` script), the GSS codes are
-used to match to the areas in MapIt that represent LocalAuthorities and the
-slugs are added to each of the areas. These GSS codes need to be kept up to date
-in case they change. An example of doing this is [frontend PR 948]
-(https://github.com/alphagov/frontend/pull/948) (when the file was still
-residing in Frontend,[it has been moved it to MapIt since]
-(https://github.com/alphagov/mapit/pull/20)).
 
 ## Troubleshooting
 
