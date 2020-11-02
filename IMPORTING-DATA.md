@@ -34,7 +34,7 @@ To update a live mapit server we:
 2.  [Export the new database to Amazon S3](#export-new-database-to-s3)
 3.  [Update servers with the new database](#update-servers-with-new-database)
 
-### 1. Generate a new database
+### <a name="generate-a-new-database">1. Generate a new database</a>
 
 #### <a name="installation">1.1 Prepare your Mapit installation</a>
 
@@ -215,7 +215,7 @@ scripts to refer to new datasets. If anything failed you may have had
 to change other things in the mapit repo too.
 
 
-### 2. Export new database to S3
+### <a name="export-new-database-to-s3"> 2. Export new database to S3</a>
 
 Export the database you just built in your Docker container:
 
@@ -255,7 +255,7 @@ script](https://github.com/alphagov/fabric-scripts/blob/master/mapit.py#L10):
 We can happily survive with one mapit-server in an environment while
 this is done.
 
-### Update production servers with new database
+### <a name="update-servers-with-new-database">Update production servers with new database</a>
 
 Now that you are happy with the changes in `staging`, you can now follow update
 the servers in `production`.

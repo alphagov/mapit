@@ -2,8 +2,8 @@
 
 We have two expectations for an updated Mapit database:
 
-- [Changes to postcodes](#for-postcodes)
-- [Changes to areas](#for-areas)
+- [Changes to postcodes](#changes-to-postcodes)
+- [Changes to areas](#changes-to-areas)
 
 ### Changes to Postcodes
 
