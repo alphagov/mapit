@@ -35,7 +35,39 @@ class Command(BaseCommand):
 
                 except Area.DoesNotExist:
                     # An area that existed at the time of the mapping, but no longer
-                    print 'Area for {authority} {gss_code} not found'.format(
-                        authority=official_name,
-                        gss_code=gss_code
-                    )
+
+                    # List of known authorities that no longer exist or have been
+                    # merged with another
+                    merged_authorities = {
+                        'Bournemouth Borough Council': 'E06000028',
+                        'Borough of Poole': 'E06000029',
+                        'Dorset County Council': 'E10000009',
+                        'Christchurch Borough Council': 'E07000048',
+                        'East Dorset District Council': 'E07000049',
+                        'North Dorset District Council': 'E07000050',
+                        'Purbeck District Council': 'E07000051',
+                        'West Dorset District Council': 'E07000052',
+                        'Weymouth and Portland Borough Council': 'E07000053',
+                        'Dorset County Council': 'E10000009',
+                        'Forest Heath District Council': 'E07000201',
+                        'St Edmundsbury Borough Council': 'E07000204',
+                        'Suffolk Coastal District Council': 'E07000205',
+                        'Waveney District Council': 'E07000206',
+                        'Taunton Deane Borough Council': 'E07000190',
+                        'West Somerset Council': 'E07000191',
+                        'Fife Council': 'S12000015',
+                        'Glasgow City Council': 'S12000046',
+                        'North Lanarkshire Council': 'S12000044',
+                        'Perth and Kinross Council': 'S12000024'
+                    }
+
+                    if official_name or gss_code in merged_authorities:
+                        print ('Area for {authority} {gss_code} not found (has been changed or merged with another area)'.format(
+                            authority=official_name,
+                            gss_code=gss_code
+                        ))
+                    else:
+                        print ('Area for {authority} {gss_code} not found'.format(
+                            authority=official_name,
+                            gss_code=gss_code
+                        ))
