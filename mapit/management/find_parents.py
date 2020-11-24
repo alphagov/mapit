@@ -47,8 +47,8 @@ class FindParentsCommand(BaseCommand):
                 except Area.DoesNotExist:
                     continue
             if not parent:
-                # Fix for May 2019 August update
-                if self.pp_area(area) == 'WARREN [11574] (LGW)' and options['commit']:
+                # Fix for May 2020 update
+                if self.pp_area(area) == 'WARREN [11570] (LGW)' and options['commit']:
                     parent = Area.objects.get(name='Bangor East and Donaghadee') # id=11758 (LGE)
                 else:
                     raise Exception("Area %s does not have a parent?" % (self.pp_area(area)))
