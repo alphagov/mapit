@@ -67,6 +67,9 @@ class Command(BaseCommand):
             MissingOnsCode(code='E06000058', area_type='UTA', area_name='Bournemouth, Christchurch and Poole Council'),
             MissingOnsCode(code='E06000059', area_type='UTA', area_name='Dorset Council'),
             MissingOnsCode(code='S12000050', area_type='UTA', area_name='North Lanarkshire Council'),
+
+            # https://geoportal.statistics.gov.uk/datasets/f7ba20849bc54f58bbb8ef14c640f9a9_0
+            MissingOnsCode(code='E06000060', area_type='UTA', area_name='Buckinghamshire'),
         ]
 
 

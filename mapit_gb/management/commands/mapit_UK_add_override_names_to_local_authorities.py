@@ -62,7 +62,8 @@ class Command(BaseCommand):
                         'Aylesbury Vale District Council': 'E07000004',
                         'Chiltern District Council': 'E07000005',
                         'South Bucks District Council': 'E07000006',
-                        'Wycombe District Council': 'E07000007'
+                        'Wycombe District Council': 'E07000007',
+                        'Buckinghamshire County Council': 'E06000060'
                     }
 
                     if official_name not in merged_authorities and gss_code not in merged_authorities:
