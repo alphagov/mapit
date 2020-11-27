@@ -101,18 +101,6 @@
   "bedford": {
     "gss": "E06000055"
   },
-  "wycombe": {
-    "gss": "E07000007"
-  },
-  "south-bucks": {
-    "gss": "E07000006"
-  },
-  "chiltern": {
-    "gss": "E07000005"
-  },
-  "aylesbury-vale": {
-    "gss": "E07000004"
-  },
   "fenland": {
     "gss": "E07000010"
   },
@@ -187,24 +175,6 @@
   },
   "exeter": {
     "gss": "E07000041"
-  },
-  "purbeck": {
-    "gss": "E07000051"
-  },
-  "christchurch": {
-    "gss": "E07000048"
-  },
-  "west-dorset": {
-    "gss": "E07000052"
-  },
-  "east-dorset": {
-    "gss": "E07000049"
-  },
-  "north-dorset": {
-    "gss": "E07000050"
-  },
-  "weymouth-and-portland": {
-    "gss": "E07000053"
   },
   "lewes": {
     "gss": "E07000063"
@@ -548,14 +518,8 @@
   "oxford": {
     "gss": "E07000178"
   },
-  "west-somerset": {
-    "gss": "E07000191"
-  },
   "mendip": {
     "gss": "E07000187"
-  },
-  "taunton-deane": {
-    "gss": "E07000190"
   },
   "south-somerset": {
     "gss": "E07000189"
@@ -587,20 +551,8 @@
   "tamworth": {
     "gss": "E07000199"
   },
-  "waveney": {
-    "gss": "E07000206"
-  },
   "babergh": {
     "gss": "E07000200"
-  },
-  "suffolk-coastal": {
-    "gss": "E07000205"
-  },
-  "st-edmundsbury": {
-    "gss": "E07000204"
-  },
-  "forest-heath": {
-    "gss": "E07000201"
   },
   "mid-suffolk": {
     "gss": "E07000203"
@@ -920,9 +872,6 @@
   "blaenau-gwent": {
     "gss": "W06000019"
   },
-  "bournemouth": {
-    "gss": "E06000028"
-  },
   "bracknell-forest": {
     "gss": "E06000036"
   },
@@ -1036,9 +985,6 @@
   },
   "perth-and-kinross": {
     "gss": "S12000048"
-  },
-  "poole": {
-    "gss": "E06000029"
   },
   "powys": {
     "gss": "W06000023"

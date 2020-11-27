@@ -58,15 +58,14 @@ class Command(BaseCommand):
                         'Fife Council': 'S12000015',
                         'Glasgow City Council': 'S12000046',
                         'North Lanarkshire Council': 'S12000044',
-                        'Perth and Kinross Council': 'S12000024'
+                        'Perth and Kinross Council': 'S12000024',
+                        'Aylesbury Vale District Council': 'E07000004',
+                        'Chiltern District Council': 'E07000005',
+                        'South Bucks District Council': 'E07000006',
+                        'Wycombe District Council': 'E07000007'
                     }
 
-                    if official_name or gss_code in merged_authorities:
-                        print ('Area for {authority} {gss_code} not found (has been changed or merged with another area)'.format(
-                            authority=official_name,
-                            gss_code=gss_code
-                        ))
-                    else:
+                    if official_name not in merged_authorities and gss_code not in merged_authorities:
                         print ('Area for {authority} {gss_code} not found'.format(
                             authority=official_name,
                             gss_code=gss_code
