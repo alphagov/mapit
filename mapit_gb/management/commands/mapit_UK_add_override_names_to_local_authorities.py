@@ -61,12 +61,7 @@ class Command(BaseCommand):
                         'Perth and Kinross Council': 'S12000024'
                     }
 
-                    if official_name or gss_code in merged_authorities:
-                        print ('Area for {authority} {gss_code} not found (has been changed or merged with another area)'.format(
-                            authority=official_name,
-                            gss_code=gss_code
-                        ))
-                    else:
+                    if official_name not in merged_authorities and gss_code not in merged_authorities:
                         print ('Area for {authority} {gss_code} not found'.format(
                             authority=official_name,
                             gss_code=gss_code
