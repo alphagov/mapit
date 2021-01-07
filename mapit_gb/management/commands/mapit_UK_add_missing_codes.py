@@ -7,17 +7,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for missing in self.missing_codes():
-            print "Looking at adding {missing_code} ({missing_code_type}) to {missing_name} ({missing_type})".format(
+            print ("Looking at adding {missing_code} ({missing_code_type}) to {missing_name} ({missing_type})".format(
                 missing_code=missing.code, missing_code_type=missing.code_type().code,
                 missing_name=missing.area_name, missing_type=missing.area_type
-            ),
+            )),
             if missing.area():
                 if missing.add_code_if_needed():
-                    print '- code added'
+                    print ('- code added')
                 else:
-                    print '- code already present'
+                    print ('- code already present')
             else:
-                print '- ERROR: Area missing!'
+                print ('- ERROR: Area missing!')
 
     def missing_codes(self):
         return [
