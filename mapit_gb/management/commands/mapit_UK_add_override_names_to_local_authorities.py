@@ -58,7 +58,8 @@ class Command(BaseCommand):
                         'Fife Council': 'S12000015',
                         'Glasgow City Council': 'S12000046',
                         'North Lanarkshire Council': 'S12000044',
-                        'Perth and Kinross Council': 'S12000024'
+                        'Perth and Kinross Council': 'S12000024',
+                        'Buckinghamshire County Council': 'E06000060'
                     }
 
                     if official_name not in merged_authorities and gss_code not in merged_authorities:
