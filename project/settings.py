@@ -22,7 +22,7 @@ else:
 
 try:
     with open(os.path.join(BASE_DIR, 'conf', conffile), 'r') as fp:
-        config = yaml.load(fp)
+        config = yaml.full_load(fp)
 except:
     config = {}
 

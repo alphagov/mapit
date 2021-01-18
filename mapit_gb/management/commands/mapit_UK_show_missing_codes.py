@@ -1,19 +1,20 @@
 from django.core.management.base import BaseCommand
 from mapit.models import Area, Generation
-import argparse
 
 
 class Command(BaseCommand):
     help = "Prints results of queries to check we aren't missing SNAC and GSS codes"
 
     def add_arguments(self, parser):
-        parser.add_argument("--code_types",
+        parser.add_argument(
+            "--code_types",
             dest="code_types",
             help="The list of code types to search for",
             default="ons,gss,govuk_slug"
         )
 
-        parser.add_argument("--area_types",
+        parser.add_argument(
+            "--area_types",
             dest="area_types",
             help="The list of area types to search for",
             # These types are from

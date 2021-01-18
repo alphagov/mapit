@@ -15,16 +15,26 @@ class Command(BaseCommand):
 
         iso_to_gss = {}
 
-        iso_to_gss_tsv = csv.reader(open(os.path.dirname(__file__) + '/../../data/openregister_gss_to_iso3166_mapping.tsv'), delimiter='\t')
+        iso_to_gss_tsv = csv.reader(open(
+            os.path.dirname(__file__)
+            + '/../../data/openregister_gss_to_iso3166_mapping.tsv'),
+            delimiter='\t'
+        )
         next(iso_to_gss_tsv)  # header line
 
         for gss, local_authority, name in iso_to_gss_tsv:
             iso_to_gss[local_authority] = gss
 
-        local_authorities_tsv = csv.reader(open(os.path.dirname(__file__) + '/../../data/openregister_local_authorities.tsv'), delimiter='\t')
+        local_authorities_tsv = csv.reader(open(
+            os.path.dirname(__file__)
+            + '/../../data/openregister_local_authorities.tsv'),
+            delimiter='\t'
+        )
         next(local_authorities_tsv)  # header line
 
-        for iso_code, country_code, local_authority_type, parent_local_authority, name, name_cy, official_name, website, start_date, end_date in local_authorities_tsv:
+        for iso_code, country_code, local_authority_type, parent_local_authority, \
+                name, name_cy, official_name, website, start_date, end_date \
+                in local_authorities_tsv:
 
             gss_code = iso_to_gss[iso_code]
 
@@ -62,12 +72,13 @@ class Command(BaseCommand):
                     }
 
                     if official_name or gss_code in merged_authorities:
-                        print ('Area for {authority} {gss_code} not found (has been changed or merged with another area)'.format(
+                        print('Area for {authority} {gss_code} not found'.format(
                             authority=official_name,
                             gss_code=gss_code
                         ))
+                        print('(has been changed or merged with another area)')
                     else:
-                        print ('Area for {authority} {gss_code} not found'.format(
+                        print('Area for {authority} {gss_code} not found'.format(
                             authority=official_name,
                             gss_code=gss_code
                         ))

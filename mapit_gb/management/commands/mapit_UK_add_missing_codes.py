@@ -7,17 +7,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for missing in self.missing_codes():
-            print "Looking at adding {missing_code} ({missing_code_type}) to {missing_name} ({missing_type})".format(
+            print("Looking at adding {missing_code} ({missing_code_type}) to {missing_name} ({missing_type})".format(
                 missing_code=missing.code, missing_code_type=missing.code_type().code,
                 missing_name=missing.area_name, missing_type=missing.area_type
-            ),
+            )),
             if missing.area():
                 if missing.add_code_if_needed():
-                    print '- code added'
+                    print('- code added')
                 else:
-                    print '- code already present'
+                    print('- code already present')
             else:
-                print '- ERROR: Area missing!'
+                print('- ERROR: Area missing!')
 
     def missing_codes(self):
         return [
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             MissingOnsCode(code='26UH', area_type='DIS', area_name='Stevenage Borough Council'),
             MissingOnsCode(code='00CH', area_type='MTD', area_name='Gateshead Borough Council'),
 
-            # From https://www.ons.gov.uk/ons/guide-method/geography/products/area-classifications/ns-area-classifications/index/corresponding-authorities/local-authorities/corresponding-las.xls
+            # From https://www.ons.gov.uk/ons/guide-method/geography/products/area-classifications/ns-area-classifications/index/corresponding-authorities/local-authorities/corresponding-las.xls # noqa: E501
             MissingOnsCode(code='00QR', area_type='UTA', area_name='Fife Council'),
             MissingOnsCode(code='00RB', area_type='UTA', area_name='Perth and Kinross Council'),
 

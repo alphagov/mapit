@@ -51,12 +51,13 @@ class Command(BaseCommand):
                     }
 
                     if slug or gss_code in merged_authorities:
-                        print ('Area for {authority} {gss_code} not found (has been changed or merged with another area)'.format(
+                        print('Area for {authority} {gss_code} not found'.format(
                             authority=slug,
                             gss_code=gss_code
                         ))
+                        print('(has been changed or merged with another area)')
                     else:
-                        print ('Area for {authority} {gss_code} not found'.format(
+                        print('Area for {authority} {gss_code} not found'.format(
                             authority=slug,
                             gss_code=gss_code
                         ))
