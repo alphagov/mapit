@@ -22,7 +22,7 @@ node {
 
     stage('Tests') {
       govuk.setEnvar("GOVUK_ENV", "ci")
-      sh("venv/bin/python manage.py test mapit mapit_gb")
+      sh("venv/bin/python manage.py test --noinput mapit mapit_gb")
     }
 
     if (env.BRANCH_NAME == 'master') {
