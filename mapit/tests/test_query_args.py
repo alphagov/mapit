@@ -32,8 +32,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             )
         )
 
@@ -42,8 +42,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(type__code='WMC'))
         )
 
@@ -52,8 +52,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(type__code__in=['WMC', 'EUR']))
         )
 
@@ -62,8 +62,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(type__code='WMC'))
         )
 
@@ -72,8 +72,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(type__code__in=['WMC', 'EUR']))
         )
 
@@ -85,8 +85,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.old_generation.id,
                 generation_low__lte=self.old_generation.id,
+                generation_high__gte=self.old_generation.id,
             )
         )
 
@@ -98,8 +98,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.old_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.old_generation.id,
             )
         )
 
@@ -108,8 +108,8 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(country__code='DE') | Q(countries__code='DE'))
         )
 
@@ -118,7 +118,7 @@ class QueryArgsTest(TestCase):
         self.q_equality(
             q,
             Q(
-                generation_high__gte=self.active_generation.id,
                 generation_low__lte=self.active_generation.id,
+                generation_high__gte=self.active_generation.id,
             ) & (Q() | Q(country__code__in=['DE', 'FR']) | Q(countries__code__in=['DE', 'FR']))
         )
