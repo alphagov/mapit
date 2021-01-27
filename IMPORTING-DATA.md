@@ -119,6 +119,7 @@ update it to change how we import the data.
 Some suggestions of places to look for help:
 - [Mysociety's documentation](https://mapit.mysociety.org/docs/)
 - [Mapit's logged issues](https://github.com/mysociety/mapit/issues)
+- [Notes about the previous data import](/HISTORY.md)
 
 Also see the [Troubleshooting](#troubleshooting) section for past issues.
 
@@ -158,7 +159,7 @@ Ssh into one of the machines and run:
 
 Then compare the output with that generated in your local Docker container.
 
-An example of the output (May 2019 data):
+An example of the output (May 2019 data) - import looks good:
 
         Show missing codes
 
@@ -166,9 +167,9 @@ An example of the output (May 2019 data):
 
         Checking ['EUR', 'CTY', 'DIS', 'LBO', 'LGD', 'MTD', 'UTA', 'COI'] for missing ['ons', 'gss', 'govuk_slug']
         12 EUR areas in current generation
-        2 EUR areas have no ons code:
-        Northern Ireland 11874 (gen 1-1) Northern Ireland
-        Scotland 9199 (gen 1-1) Scotland
+          2 EUR areas have no ons code:
+            Northern Ireland 11874 (gen 1-1) Northern Ireland
+            Scotland 9199 (gen 1-1) Scotland
         26 CTY areas in current generation
         192 DIS areas in current generation
         33 LBO areas in current generation
@@ -177,11 +178,39 @@ An example of the output (May 2019 data):
         109 UTA areas in current generation
         1 COI areas in current generation
 
-There is a also script in mapit
-[mapit_gb/management/commands/mapit_UK_add_missing_codes.py](https://github.com/alphagov/mapit/blob/master/mapit_gb/management/commands/mapit_UK_add_missing_codes.py) that
-you can update to add the codes once you work out if anything can
-be done. See [this example](https://github.com/alphagov/mapit/commit/532f3e88ce0f5dea64b8f7eede6fb80605648e21).
+An example of the output (November 2020 data) - import has some flagged issues:
 
+        11870 areas in current generation (1)
+
+        Checking ['EUR', 'CTY', 'DIS', 'LBO', 'LGD', 'MTD', 'UTA', 'COI'] for missing ['ons', 'gss', 'govuk_slug']
+        12 EUR areas in current generation
+          2 EUR areas have no ons code:
+            Northern Ireland 11870 (gen 1-1) Northern Ireland
+            Scotland 9195 (gen 1-1) Scotland
+        25 CTY areas in current generation
+        188 DIS areas in current generation
+        33 LBO areas in current generation
+        11 LGD areas in current generation
+        36 MTD areas in current generation
+        110 UTA areas in current generation
+          1 UTA areas have no ons code:
+            Buckinghamshire Council 1767 (gen 1-1) England
+          1 UTA areas have no govuk_slug code:
+            Buckinghamshire Council 1767 (gen 1-1) England
+        1 COI areas in current generation
+
+Note the last few lines where it says Buckinghamshire Council has no `ons` code or `govuk_slug` code.
+You may have output similar to this if these councils have had some updates, and
+you will have to make some additional updates in the code:
+
+  - Missing ONS/GSS codes are added in [mapit_UK_add_missing_codes.py](https://github.com/alphagov/mapit/blob/master/mapit_gb/management/commands/mapit_UK_add_missing_codes.py), see [this example](https://github.com/alphagov/mapit/commit/532f3e88ce0f5dea64b8f7eede6fb80605648e21)
+  - An ONS/GSS code might need to be updated, or council names updated/removed in [authorities.json](https://github.com/alphagov/mapit/blob/master/mapit_gb/data/authorities.json), see [this example](https://github.com/alphagov/mapit/commit/b4d96ffa6160cfa9a8414383b96e6f1a8fa01b71)
+  - If there are merged/abolished authorities, to prevent it from being flagged in the
+  next import's output (and potentially add to the confusion), you can add them to the
+  exception list in [mapit_UK_add_override_names_to_local_authorities.py](https://github.com/alphagov/mapit/blob/master/mapit_gb/management/commands/mapit_UK_add_override_names_to_local_authorities.py#L41) and [mapit_UK_add_slugs_to_local_authorities.py](https://github.com/alphagov/mapit/blob/master/mapit_gb/management/commands/mapit_UK_add_slugs_to_local_authorities.py#L36). You can also check if the authority
+  is still active on [https://findthatpostcode.uk](https://findthatpostcode.uk/areas/E07000191.html)
+
+You will have to reset the db and re-import the data again.
 Once these have been updated, the API will return the new GSS code, albeit mislabelled as an ONS code.
 
 **Note** [Licensify](https://github.com/alphagov/licensify) also depends on knowledge of SNAC codes to build it's own API paths. It will be necessary to update this [file](https://github.com/alphagov/licensify/blob/master/common/app/uk/gov/gds/licensing/model/SnacCodes.scala) with the new GSS codes and corresponding area.
@@ -191,12 +220,14 @@ Once these have been updated, the API will return the new GSS code, albeit misla
 
 If you've had users complaining that their postcode isn't
 recognised, then try _those_ postcodes and any other ones
-you know. If you don't know any postcodes, try this random one:
+you know. You can get latest postcodes from [https://checkmypostcode.uk/date/](https://checkmypostcode.uk/date/)
+and test them on your local database:
 
     $ curl http://mapit.dev.gov.uk/postcode/ME206QZ
 
 You should expect a `200` response with data present in the `areas`
-field of the response. See [this example output](https://github.com/alphagov/mapit/commit/532f3e88ce0f5dea64b8f7eede6fb80605648e21) for an idea of what to expect.
+field of the response. See [this example output](https://github.com/alphagov/mapit#to-fetch-information-about-a-single-postcode)
+for an idea of what to expect.
 
 You can also compare the response to existing data we have in one of our environments
 and on Mysociety.
@@ -242,6 +273,8 @@ to refer to your new file, see [this example PR](https://github.com/alphagov/map
 Submit change as a PR against [Mapit](https://github.com/alphagov/mapit) and
 deploy following the normal process to `staging`.
 
+> Testing on integration may not be as accurate as staging so we recommend testing on staging
+
 Now that your changes have been deployed, you can test the new database in
 `AWS staging` before moving to `production`. See [Testing a server with an
 updated Mapit database](/TESTING-SERVER.md).
@@ -262,15 +295,29 @@ the servers in `production`.
 
 > **Note: Only deploy this change to production once the new data has been tested
 in staging. If a new Mapit machine gets created in AWS, it will automatically
-try importing the data.**
+try importing the data from the new database.**
 
 
 ## Troubleshooting
+
+### Useful database queries
+
+- Find area by name
+
+        $ mapit=> select * from mapit_area where name = 'Abbey';
+
+- Find area by id
+
+        $ mapit=> select * from mapit_area where id=1767;
+- Find authority by name
+
+        $ mapit=> select * from mapit_name where name like 'Buckinghamshire%';
 
 ### Unable to drop the database when running the ./reset-db.sh script
 
 1. Log into the database
 
+         $ python ./manage.py dbshell
 2. Prevent future connections by running
 
         $ REVOKE CONNECT ON DATABASE mapit FROM public;
@@ -280,7 +327,7 @@ try importing the data.**
 
 Failing that, stop `collectd`, it probably connects again the moment the old connection gets terminated:
 
-    $sudo service collectd stop
+    $ sudo service collectd stop
 
 ### Hitting exceptions where an area has a missing parent or spelt incorrectly
 
@@ -288,13 +335,24 @@ If you see something similar to:
 
   ```
   get() returned more than one area -- it returned 2!
-  ```
-
-  ```
   /var/govuk/mapit/mapit/management/find_parents.py:49
   Exception: Area Moray [9325] (SPC) does not have a parent?
   ```
 
-Compare the entry with the database in `integration` or `staging` to identify what information is missing or needs to be corrected. Searching for the data on https://mapit.mysociety.org might also be helpful.
+or:
 
-You can manually fix it by adding a correction in [mapit/management/find_parents.py](https://github.com/alphagov/mapit/blob/master/mapit/management/find_parents.py). See [this example](https://github.com/alphagov/mapit/commit/5b2ede155a157d7d69883a6a0197513bcbcca4bb) for more information.
+  ```
+  Exception: ONS code S17000011 is used for Highland and Islands PER and Highlands and Islands PER
+  ```
+
+Compare the entry with the database in `integration` or `staging` to identify what
+information is missing or needs to be corrected. Searching for the data on
+https://mapit.mysociety.org and checking the [logged issues on Mysociety's repo](https://github.com/mysociety/mapit/issues)
+might also be helpful. Also see [useful database queries](#useful-database-queries).
+
+You can also search for the area by its ONS code on the ONS website e.g.
+http://statistics.data.gov.uk/atlas/resource?uri=http://statistics.data.gov.uk/id/statistical-geography/S17000011
+
+You can manually fix it by adding a correction in [mapit/management/find_parents.py](https://github.com/alphagov/mapit/blob/master/mapit/management/find_parents.py). See [this example](https://github.com/alphagov/mapit/commit/5b2ede155a157d7d69883a6a0197513bcbcca4bb)
+and [this example](https://github.com/alphagov/mapit/pull/70/files#diff-8e70109ed476fd7c998d2cd2a051297478b15d926e4c4d7645361197276292eeR203)
+for more information.

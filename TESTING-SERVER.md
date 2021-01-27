@@ -5,9 +5,9 @@ We have two expectations for an updated Mapit database:
 - [Changes to postcodes](#changes-to-postcodes)
 - [Changes to areas](#changes-to-areas)
 
-### Changes to Postcodes
+## Changes to Postcodes
 
-#### Existing postcodes
+### Existing postcodes
 
 It returns a `200 OK` status for all postcode requests that
 previously returned `200 OK`. The ONSPD is a complete set of all
@@ -15,7 +15,7 @@ postcodes, live and terminated and we import the whole thing so
 postcodes should never be "deleted". If a request for a postcode
 previously succeeded, it should still succeed.
 
-#### Invalid postcodes
+### Invalid postcodes
 It returns either a `404 Not Found` or a `200 OK` for all postcode
 requests that previously returned `404 Not Found`. As postcodes are
 released every 3 months, people may have searched for one that did
@@ -24,7 +24,7 @@ However if they searched for a bad postcode, or something that is
 not a postcode at all, we would still expect that to
 `404 Not Found`.
 
-### Changes to Areas
+## Changes to Areas
 
 A url of the form `/area/<ons-or-gss-code` will result in a
 `302 Redirect` to a url `/area/<internal-id>`.
@@ -40,17 +40,19 @@ You can test the new database using one of the options:
 1. [Generating some test data](#generating-some-test-data)
 2. [Running the test samples script](#running-the-test-samples-script)
 
-### Generating some test data
+## Generating some test data
 
 The best source of testing data for postcode lookups is Production, so
 let's grab all the relevant responses from yesterday's log:
 
     $ your laptop> ssh <mapit_production_machine>
-    $ mapit-1> sudo awk '$9==200 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-200s
-    $ mapit-1> sudo awk '$9==404 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-404s
-    $ mapit-1> sudo awk '$9==302 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log.1 >mapit-302s
+    $ mapit-1> sudo awk '$9==200 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log | sort | uniq >mapit-200s
+    $ mapit-1> sudo awk '$9==404 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log | sort | uniq >mapit-404s
+    $ mapit-1> sudo awk '$9==302 {print "http://localhost:3108" $7}' /var/log/nginx/mapit-access.log | sort | uniq >mapit-302s
 
-Download the files via the jumpbox, e.g.
+> In the commands above, for every line where the 9th field is ‘200’, print the string “http://localhost:3108” followed by the 7th field of that line, which is the postcode.
+
+Download the files via the jumpbox and store in your /Downloads folder, e.g.
 
     $ scp -r -oProxyJump=jumpbox.production.govuk.digital <ip_address>:mapit-200s ~/Downloads/
 
@@ -89,13 +91,15 @@ run it on rather than replaying traffic from production. Useful when
 upgrading production environments, perhaps less so for upgrading other
 environments.
 
-### Running the test samples script
+## Running the test samples script
 
 For a more comprehensive test, you can use the [test-samples.sh](https://github.com/alphagov/mapit/blob/master/test-samples.sh)
 script, which needs to be run before and after a database upgrade:
 
     $ your laptop> ssh mapit-1.production
-    $ mapit-1> /var/apps/mapit/test-samples.sh sample
+    $ mapit-1> sudo su - root /var/apps/mapit/test-samples.sh sample
+
+> This can take around 15-20 minutes
 
 Perform the database import in the usual way, and then run the script
 in "check" mode, to download the postcode data again and diff the
