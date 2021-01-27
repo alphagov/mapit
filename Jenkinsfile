@@ -15,14 +15,14 @@ node {
 
     stage('Installing Packages') {
       sh("rm -rf venv")
-      sh("virtualenv -p python3.5 --no-site-packages venv")
-      sh("venv/bin/python -m pip -q install --upgrade pip wheel setuptools")
-      sh("venv/bin/python -m pip -q install -r requirements.txt")
+      sh("python3.6 -m venv venv")
+      sh("venv/bin/python -m pip install --upgrade pip wheel setuptools")
+      sh("venv/bin/python -m pip install -r requirements.txt")
     }
 
     stage('Tests') {
       govuk.setEnvar("GOVUK_ENV", "ci")
-      sh("venv/bin/python manage.py test mapit mapit_gb")
+      sh("venv/bin/python manage.py test --noinput mapit mapit_gb")
     }
 
     if (env.BRANCH_NAME == 'master') {
