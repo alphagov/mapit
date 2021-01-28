@@ -22,7 +22,12 @@ AREA_SRID: 27700
 DEBUG: False
 
 # A list of IP addresses or User Agents that should be excluded from rate limiting. Optional.
-#  RATE_LIMIT: []
+RATE_LIMIT:
+  minutes: 1
+  requests: 10000
+  functions:
+    - 'postcode'
+    - 'partial_postcode'
 
 # Email address that errors should be sent to. Optional.
 # BUGS_EMAIL: 'not used'

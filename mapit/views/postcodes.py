@@ -9,6 +9,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.contrib.gis.db.models import Collect
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 from django.db.models import FloatField
 from django.db.models.expressions import Func
 from django.contrib.gis.db.models.functions import Distance
@@ -55,7 +56,7 @@ class GeometryCentroidDistance(Func):
             expression, PostGISAdapter(geom), output_field=FloatField(), **extra)
 
 
-@ratelimit
+@cache_page(60 * 15)
 def postcode(request, postcode, format=None):
     if hasattr(countries, 'canonical_postcode'):
         canon_postcode = countries.canonical_postcode(postcode)
