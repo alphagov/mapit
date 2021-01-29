@@ -44,7 +44,7 @@ jobs:
         set -xe
         python -VV
         python -m site
-        pip install tox tox-gh-actions codecov
+        pip install tox tox-gh-actions codecov -r requirements.txt
 
     - name: Install GDAL
       run: sudo apt-get install gdal-bin
