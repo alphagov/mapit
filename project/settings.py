@@ -90,10 +90,7 @@ DATABASES = {
 }
 
 # Make this unique, and don't share it with anybody.
-if ENVIRONMENT == 'production':
-    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-else:
-    SECRET_KEY = config.get('DJANGO_SECRET_KEY', '')
+SECRET_KEY = config.get('DJANGO_SECRET_KEY', 'gu^&xc)hoibh3x&s+9009jbn4d$!nq0lz+syx-^x8%z24!kfs4')
 
 ALLOWED_HOSTS = ['*']
 
