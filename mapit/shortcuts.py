@@ -50,25 +50,24 @@ def output_json(out, code=200):
             out['debug_db_queries'] = connection.queries
         indent = 4
     encoder = GEOS_JSONEncoder(ensure_ascii=False, indent=indent)
-    content = encoder.iterencode(out)
+    
+    if type(out) is dict:
+        response = http.JsonResponse(out, encoder=GEOS_JSONEncoder, status=code)
+    else:
+        content = encoder.iterencode(out)
 
-    # We don't want a generator function (iterencode) to be passed to an
-    # HttpResponse, as it won't cache due to its close() function adding it to
-    # an instance attribute.
-    content = map(lambda x: x, content)
+        # We don't want a generator function (iterencode) to be passed to an
+        # HttpResponse, as it won't cache due to its close() function adding it to
+        # an instance attribute.
+        content = map(lambda x: x, content)
 
-    types = {
-        400: http.HttpResponseBadRequest,
-        404: http.HttpResponseNotFound,
-        500: http.HttpResponseServerError,
-    }
-    response_type = types.get(code, http.StreamingHttpResponse)
+        response = http.StreamingHttpResponse(content_type='application/json; charset=utf-8', status=code)
+        response['Cache-Control'] = 'max-age=2419200'  # 4 weeks
+        attr = 'streaming_content' if getattr(response, 'streaming', None) else 'content'
+        setattr(response, attr, content)
 
-    response = response_type(content_type='application/json; charset=utf-8')
     response['Access-Control-Allow-Origin'] = '*'
-    response['Cache-Control'] = 'max-age=2419200'  # 4 weeks
-    attr = 'streaming_content' if getattr(response, 'streaming', None) else 'content'
-    setattr(response, attr, content)
+
     return response
 
 
