@@ -1,5 +1,5 @@
 Django==1.11.29
-PyYAML==3.12
+PyYAML==5.1
 Shapely==1.7.1
 gunicorn==20.0.4
 psycopg2==2.8.6
